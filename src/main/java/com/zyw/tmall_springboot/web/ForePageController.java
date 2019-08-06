@@ -69,7 +69,7 @@ public class ForePageController {
     }
     @GetMapping(value="/review")
     public String review(){
-        return "fore/review";
+        return "fore/Review";
     }
     @GetMapping(value="/search")
     public String searchResult(){
