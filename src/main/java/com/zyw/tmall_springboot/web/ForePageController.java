@@ -75,9 +75,9 @@ public class ForePageController {
     public String searchResult(){
         return "fore/search";
     }
-    @GetMapping("/forelogout")
+    /*@GetMapping("/forelogout")
     public String logout( ) {
         return "redirect:home";
-    }
+    }*/
 
 }

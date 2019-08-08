@@ -5,6 +5,7 @@ import com.zyw.tmall_springboot.dao.OrderItemDAO;
 import com.zyw.tmall_springboot.pojo.Order;
 import com.zyw.tmall_springboot.pojo.OrderItem;
 import com.zyw.tmall_springboot.pojo.Product;
+import com.zyw.tmall_springboot.pojo.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -49,6 +50,7 @@ public class OrderItemService {
     public List<OrderItem> listByOrder(Order order) {
         return orderItemDAO.findByOrderOrderByIdDesc(order);
     }
+
     public int getSaleCount(Product product) {
         List<OrderItem> ois =listByProduct(product);
         int result =0;
@@ -62,4 +64,23 @@ public class OrderItemService {
     public List<OrderItem> listByProduct(Product product) {
         return orderItemDAO.findByProduct(product);
     }
+    public List<OrderItem> listByUser(User user)
+    {
+        return orderItemDAO.findByUserAndOrderIsNull(user);
+    }
+    public void update(OrderItem orderItem)
+    {
+        orderItemDAO.save(orderItem);
+    }
+    public void add(OrderItem orderItem)
+    {
+        orderItemDAO.save(orderItem);
+    }
+    public OrderItem get(int id) {
+        return orderItemDAO.findOne(id);
+    }
+    public void delete(int id) {
+        orderItemDAO.delete(id);
+    }
+
 }

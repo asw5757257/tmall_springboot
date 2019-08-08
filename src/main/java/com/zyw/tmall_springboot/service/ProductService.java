@@ -12,6 +12,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import java.beans.PropertyDescriptor;
+import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -29,6 +31,10 @@ public class ProductService {
     private  CategoryService categoryService;
     @Autowired
     private ProductImageService productImageService;
+    @Autowired
+    private ReviewService reviewService;
+    @Autowired
+    private OrderItemService orderItemService;
     public void add(Product bean)
     {
         productDAO.save(bean);
@@ -87,5 +93,28 @@ public class ProductService {
             }
             category.setProductsByRow(productsByRow);
         }
+    }
+
+    public void setSaleAndReviewNumber(Product product)
+    {
+        int saleCount = orderItemService.getSaleCount(product);
+        product.setSaleCount(saleCount);
+
+        int reviewCount = reviewService.getCount(product);
+        product.setReviewCount(reviewCount);
+    }
+    public void setSaleAndReviewNumber(List<Product> products)
+    {
+        for(Product product:products)
+        {
+            setSaleAndReviewNumber(product);
+        }
+    }
+    public List<Product> search(String keyword,int start,int size)
+    {
+        Sort sort = new Sort(Sort.Direction.DESC,"id");
+        Pageable pageable = new PageRequest(start,size,sort);
+        List<Product> products = productDAO.findByNameLike("%"+keyword+"%",pageable);
+        return products;
     }
 }
