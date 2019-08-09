@@ -76,11 +76,7 @@ public class ForeRESTController {
             return Result.success();
         }
     }
-    @GetMapping("/forelogout")
-    public String logout(HttpSession session) {
-        session.removeAttribute("user");
-        return "redirect:home";
-    }
+
     @GetMapping("/foreproduct/{pid}")
     public Object product(@PathVariable("pid")int pid)
     {
@@ -204,5 +200,44 @@ public class ForeRESTController {
         map.put("orderItems", orderItems);
         map.put("total", total);
         return Result.success(map);
+    }
+    @GetMapping("foreaddCart")
+    public Object addCart(int pid,int num,HttpSession session)
+    {
+        buyoneAndAddCart(pid,num,session);
+        return Result.success();
+    }
+    @GetMapping("forecart")
+    public Object cart(HttpSession session)
+    {
+        User user = (User) session.getAttribute("user");
+        List<OrderItem> orderItems = orderItemService.listByUser(user);
+        productImageService.setFirstProdutImagesOnOrderItems(orderItems);
+        return orderItems;
+    }
+    @GetMapping("forechangeOrderItem")
+    public Object changeOrderItem(HttpSession session,int pid,int num)
+    {
+        User user = (User) session.getAttribute("user");
+        if(null == user) return Result.fail("未登录");
+        List<OrderItem> orderItems = orderItemService.listByUser(user);
+        for(OrderItem orderItem:orderItems)
+        {
+            if(orderItem.getProduct().getId()==pid)
+            {
+                orderItem.setNumber(num);
+                orderItemService.update(orderItem);
+                break;
+            }
+        }
+        return Result.success();
+    }
+    @GetMapping("foredeleteOrderItem")
+    public Object deleteOrderItem(HttpSession session,int oiid)
+    {
+        User user = (User) session.getAttribute("user");
+        if(null == user) return Result.fail("未登录");
+        orderItemService.delete(oiid);
+        return Result.success();
     }
 }
