@@ -3,11 +3,13 @@ package com.zyw.tmall_springboot.web;
 import com.zyw.tmall_springboot.comparator.*;
 import com.zyw.tmall_springboot.pojo.*;
 import com.zyw.tmall_springboot.service.*;
+import org.apache.commons.lang.math.RandomUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.HtmlUtils;
 
 import javax.servlet.http.HttpSession;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 /**
@@ -32,6 +34,8 @@ public class ForeRESTController {
     private OrderItemService orderItemService;
     @Autowired
     private ReviewService reviewService;
+    @Autowired
+    private OrderService orderService;
     @GetMapping("/forehome")
     public Object home()
     {
@@ -240,4 +244,67 @@ public class ForeRESTController {
         orderItemService.delete(oiid);
         return Result.success();
     }
+    @PostMapping("forecreateOrder")
+    public Object createOrder(@RequestBody Order order,HttpSession session)
+    {
+        User user = (User) session.getAttribute("user");
+        if(null==user)
+            return Result.fail("未登录");
+        String orderCode = new SimpleDateFormat("yyyyMMddHHmmssSSS").format(new Date()) + RandomUtils.nextInt(10000);
+        order.setOrderCode(orderCode);
+        order.setCreateDate(new Date());
+        order.setUser(user);
+        order.setStatus(OrderService.waitPay);
+        List<OrderItem> ois= (List<OrderItem>)  session.getAttribute("ois");
+        float total =orderService.add(order,ois);
+
+        Map<String,Object> map = new HashMap<>();
+        map.put("oid", order.getId());
+        map.put("total", total);
+
+        return Result.success(map);
+    }
+    @GetMapping("forepayed")
+    public Object payed(int oid) {
+        Order order = orderService.get(oid);
+        order.setStatus(OrderService.waitDelivery);
+        order.setPayDate(new Date());
+        orderService.update(order);
+        return order;
+    }
+    @GetMapping("forebought")
+    public Object bought(HttpSession session) {
+        User user =(User)  session.getAttribute("user");
+        if(null==user)
+            return Result.fail("未登录");
+        List<Order> os= orderService.listByUserWithoutDelete(user);
+        orderService.removeOrderFromOrderItem(os);
+        return os;
+    }
+    @GetMapping("foreconfirmPay")
+    public Object confirmPay(int oid) {
+        Order o = orderService.get(oid);
+        orderItemService.fill(o);
+        orderService.cacl(o);
+        orderService.removeOrderFromOrderItem(o);
+        return o;
+    }
+    @GetMapping("foreorderConfirmed")
+    public Object orderConfirmed(int oid)
+    {
+        Order o = orderService.get(oid);
+        o.setStatus(OrderService.waitReview);
+        o.setConfirmDate(new Date());
+        orderService.update(o);
+        return Result.success();
+    }
+    @PutMapping("foredeleteOrder")
+    public Object deleteOrder(int oid)
+    {
+        Order o = orderService.get(oid);
+        o.setStatus(OrderService.delete);
+        orderService.update(o);
+        return Result.success();
+    }
+
 }

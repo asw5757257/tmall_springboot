@@ -3,6 +3,7 @@ package com.zyw.tmall_springboot.service;
 import com.zyw.tmall_springboot.dao.OrderDAO;
 import com.zyw.tmall_springboot.pojo.Order;
 import com.zyw.tmall_springboot.pojo.OrderItem;
+import com.zyw.tmall_springboot.pojo.User;
 import com.zyw.tmall_springboot.util.Page4Navigator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -10,6 +11,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -30,6 +33,8 @@ public class OrderService {
 
     @Autowired
     private OrderDAO orderDAO;
+    @Autowired
+    private OrderItemService orderItemService;
     public Order get(int id)
     {
         return orderDAO.findOne(id);
@@ -50,10 +55,45 @@ public class OrderService {
         }
     }
 
-    private void removeOrderFromOrderItem(Order order) {
+    public void removeOrderFromOrderItem(Order order) {
         List<OrderItem> orderItems= order.getOrderItems();
         for (OrderItem orderItem : orderItems) {
             orderItem.setOrder(null);
         }
+    }
+    public void add(Order order)
+    {
+        orderDAO.save(order);
+    }
+    @Transactional(propagation= Propagation.REQUIRED,rollbackForClassName="Exception")
+    public float add(Order order, List<OrderItem> ois)
+    {
+        float total = 0;
+        add(order);
+        if(false)
+            throw new RuntimeException();
+        for(OrderItem orderItem:ois)
+        {
+            orderItem.setOrder(order);
+            orderItemService.update(orderItem);
+            total+=orderItem.getProduct().getPromotePrice()*orderItem.getNumber();
+        }
+        return total;
+    }
+    public List<Order> listByUserAndNotDeleted(User user) {
+        return orderDAO.findByUserAndStatusNotOrderByIdDesc(user, OrderService.delete);
+    }
+    public List<Order> listByUserWithoutDelete(User user) {
+        List<Order> orders = listByUserAndNotDeleted(user);
+        orderItemService.fill(orders);
+        return orders;
+    }
+    public void cacl(Order o) {
+        List<OrderItem> orderItems = o.getOrderItems();
+        float total = 0;
+        for (OrderItem orderItem : orderItems) {
+            total+=orderItem.getProduct().getPromotePrice()*orderItem.getNumber();
+        }
+        o.setTotal(total);
     }
 }
