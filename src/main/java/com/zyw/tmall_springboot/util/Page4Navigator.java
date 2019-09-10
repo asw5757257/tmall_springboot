@@ -2,6 +2,7 @@ package com.zyw.tmall_springboot.util;
 
 import org.springframework.data.domain.Page;
 
+import java.io.Serializable;
 import java.util.List;
 
 /**
@@ -11,7 +12,7 @@ import java.util.List;
  * @create: 2019-07-29 14:35
  **/
 
-public class Page4Navigator<T> {
+public class Page4Navigator<T> implements Serializable {
     Page<T> pageFromJPA;
     int navigatePages;
     int totalPages;
